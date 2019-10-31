@@ -1,4 +1,4 @@
-I"�<p>由于图示在细节和宏观上的表达更直观，因此程序员不管是在开发之前做分析论证，开发过程中整理思路或者开发后的总结汇报，常常都需要以这种形式来呈现。作为图示中比重最大的关系图，不论是简单如Word, Pages的自带工具还是诸如Visio, OmniGraffle这些专业软件，都存在着操作和排版布局的问题；我经常在使用这些软件的过程中跑偏去调整布局而影响了整体思路的连贯性，大大降低了工作效率。这里面的矛盾在于程序员更倾向用干扰更少的文本而不是所见即所得的图形化工具来表达自己的思想，今天我要介绍的<a href="http://www.graphviz.org" target="_blank"><strong><em>Graphviz</em></strong></a> 就是AT&amp;T Labs Research开发的关系图脚本绘制工具</p>
+I"�<p>由于图示在细节和宏观上的表达更直观，因此程序员不管是在开发之前做分析论证，开发过程中整理思路或者开发后的总结汇报，常常都需要以这种形式来呈现。作为图示中比重最大的关系图，不论是简单如Word, Pages的自带工具还是诸如Visio, OmniGraffle这些专业软件，都存在着操作和排版布局的问题；我经常在使用这些软件的过程中跑偏去调整布局而影响了整体思路的连贯性，大大降低了工作效率。这里面的矛盾在于程序员更倾向用干扰更少的文本而不是所见即所得的图形化工具来表达自己的思想，今天我要介绍的<a href="http://www.graphviz.org" target="_blank"><strong><em>Graphviz</em></strong></a> 就是AT&amp;T Labs Research开发的关系图脚本绘制工具</p>
 
 <h3 id="序言">序言</h3>
 
@@ -911,6 +911,6 @@
 <p><br /></p>
 
 <blockquote>
-  <p><a href="/stidio.github.io-master/2017/07/11/how_do_programmer_express_yourself_better-graphviz.html">原始链接</a> 版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh">Creative Commons BY-NC-ND 4.0</a></p>
+  <p><a href="/2017/07/how_do_programmer_express_yourself_better-graphviz/">原始链接</a> 版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh">Creative Commons BY-NC-ND 4.0</a></p>
 </blockquote>
 :ET

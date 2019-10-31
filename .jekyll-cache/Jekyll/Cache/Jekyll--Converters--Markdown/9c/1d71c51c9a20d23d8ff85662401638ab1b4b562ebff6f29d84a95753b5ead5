@@ -1,4 +1,4 @@
-I"�<p>这几天有兴致研究了一些东西想更新下博客，但发现Jekyll不能运行，把过程中踩到的一些坑记录下，以便他人：</p>
+I"�<p>这几天有兴致研究了一些东西想更新下博客，但发现Jekyll不能运行，把过程中踩到的一些坑记录下，以便他人：</p>
 
 <p>首先提示版本错误：</p>
 <blockquote>
@@ -48,6 +48,6 @@
 <p><br /></p>
 
 <blockquote>
-  <p><a href="/stidio.github.io-master/2017/12/28/jekyll_problem_in_macos_high_sierra_10_13.html">原始链接</a> 版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh">Creative Commons BY-NC-ND 4.0</a></p>
+  <p><a href="/2017/12/jekyll_problem_in_macos_high_sierra_10_13/">原始链接</a> 版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh">Creative Commons BY-NC-ND 4.0</a></p>
 </blockquote>
 :ET

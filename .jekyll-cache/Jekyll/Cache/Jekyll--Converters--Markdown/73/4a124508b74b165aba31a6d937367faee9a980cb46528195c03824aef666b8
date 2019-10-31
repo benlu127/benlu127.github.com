@@ -1,0 +1,2 @@
+I"�<p>不讲语言特性，只从工程角度出发，个人觉得C++标准委员会在C++11中对多线程库的引入是有史以来做得最人道的一件事；今天我将就C++11多线程中的atomic原子操作展开讨论；比较互斥锁，自旋锁(spinlock)，无锁编程的异同，并进行性能测试；最后会讨论一下内存序的问题；为了流畅阅读你最好先熟悉一下C++11 Atomic的基本操作<a href="http://en.cppreference.com/w/cpp/atomic" target="_blank">英文文档</a>，这里还有一份我觉得做得很用心的关于C++11并发编程的<a href="https://github.com/forhappy/Cplusplus-Concurrency-In-Practice" target="_blank">中文教程</a>，你也可以从其中找到对应的知识点；</p>
+:ET
