@@ -1,2 +1,0 @@
-I"I<p>平时工作做C/C++方面的开发更多还是在Windows下使用Visual Studio，几乎都是做跨平台开发，Windows上跑通后Linux上编译发布，基本上都没什么问题，如果的确需要调试，有VisualGDB的存在也很方便；但在macOS下使用过IDE性质的XCode,CLion,Qt Creator，也使用过轻量级的诸如TextMate, Sublime Text，但始终找不到Visual Studio的感觉，回想起来macOS下使用最多的C/C++开发环境居然是CodeRunner；直到最近这几天有空折腾了一下Vistual Studio Code，瞬间找到了初恋的感觉!</p>
-:ET

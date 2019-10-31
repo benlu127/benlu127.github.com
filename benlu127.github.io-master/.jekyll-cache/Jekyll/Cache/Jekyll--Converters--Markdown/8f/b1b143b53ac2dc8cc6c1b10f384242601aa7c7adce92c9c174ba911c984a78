@@ -1,2 +1,0 @@
-I"�<p>小帽子<a href="https://www.alfredapp.com" target="_blank">Alfred</a>作为macOS上的最佳效率软件应该没太大争议(<a href="https://github.com/hzlzh/Best-App" target="_blank">排名</a>)，而其中最强大的部分即为Alfred 2.0推出的<a href="https://www.alfredapp.com/workflows/" target="_blank">Workflow</a>特性；其允许你将日常重复性的工作使用脚本语言(目前支持：bash, zsh, php, python, ruby, perl, osascript(AppleScript, JavaScript))封装起来，以Alfred作为统一的入口和呈现来使用，大大提高效率；本文将对其开发的一般流程进行讲述，并最终实现两个实例：</p>
-:ET
