@@ -1,0 +1,6 @@
+I"�<p>今天晚上正好有时间，想把系统更新到macOS High Sierra，从商店下载完成后，习惯性的做一个安装盘备用，参考之前的命令行，修改运行:</p>
+<blockquote>
+  <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo</span> /Applications/Install<span class="se">\ </span>macOS<span class="se">\ </span>High<span class="se">\ </span>Sierra.app/Contents/Resources/createinstallmedia <span class="nt">--volume</span> /Volumes/I <span class="nt">--applicationpath</span> /Applications/Install<span class="se">\ </span>macOS<span class="se">\ </span>High<span class="se">\ </span>Sierra.app —nointeraction
+</code></pre></div>  </div>
+</blockquote>
+:ET

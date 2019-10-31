@@ -1,0 +1,24 @@
+---
+layout: post
+title:  "My first page"
+date:   2019-10-31 14:00:01
+tags: { php java }
+---
+第一篇随便写写，看看效果
+
+```javascript
+const Razorpay = require('razorpay');
+
+let rzp = Razorpay({
+	key_id: 'KEY_ID',
+	secret: 'name'
+});
+
+// capture request
+rzp.capture(payment_id, cost)
+	.then(function (data) {
+		return 2;
+	})
+```
+
+好了，就到这里吧

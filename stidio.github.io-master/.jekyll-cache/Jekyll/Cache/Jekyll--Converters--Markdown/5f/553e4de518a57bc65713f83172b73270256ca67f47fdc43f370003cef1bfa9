@@ -1,0 +1,221 @@
+I"�h<p>早在C++03的时候就用模板的方式实现过类成员函数的静态检查；这两天一个小兄弟又问到我同样问题，使用C++11撸了一个通用版本可以检查变量，函数和类型定义，使用GCC和CLANG编译都没问题，但在VS2015上却出现了迷之错误，前后折腾了半天确定应该是其BUG，重新选定方案撸了另一个版本，全平台兼容，<a href="/assets/use_template_and_macro_to_check_for_member_of_class_is_exist/has.cpp">点此下载</a>。</p>
+
+<h3 id="需求">需求</h3>
+
+<p>还是从需求出发：</p>
+
+<blockquote>
+  <ol>
+    <li>简单易用，大概形式应该这样：HAS_MEMBER(type, name)</li>
+    <li>要同时支持成员变量，成员函数和类型定义，如: HAS_MEMBER(std::vector&lt;int&gt;, size), HAS_MEMBER(std::vector&lt;int&gt;, value_type)</li>
+    <li>引入函数定义支持重载函数，函数定义为了书写方便采用引用方式，如: HAS_MEMBER(std::vector&lt;int&gt;, push_back, void(const int&amp;))；对于非重载函数也可检验其是否符合函数定义，如: HAS_MEMBER(std::vector&lt;int&gt;, size, size_t())为false (正确应为: size_t() const)</li>
+  </ol>
+</blockquote>
+
+<p>测试先行：</p>
+
+<blockquote>
+  <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">HAS_MEMBER_DEF</span><span class="p">(</span><span class="n">push_back</span><span class="p">);</span>
+<span class="n">HAS_MEMBER_DEF</span><span class="p">(</span><span class="n">size</span><span class="p">);</span>
+<span class="n">HAS_MEMBER_DEF</span><span class="p">(</span><span class="n">value_type</span><span class="p">);</span>
+<span class="n">HAS_MEMBER_DEF</span><span class="p">(</span><span class="n">first</span><span class="p">);</span>
+<span class="n">HAS_MEMBER_DEF</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS_MEMBER</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">push_back</span><span class="p">)</span> <span class="o">==</span> <span class="nb">false</span><span class="p">,</span> <span class="s">"重载函数"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS_MEMBER</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">push_back</span><span class="p">,</span> <span class="kt">void</span><span class="p">(</span><span class="k">const</span> <span class="kt">int</span> <span class="o">&amp;</span><span class="p">)),</span> <span class="s">"重载函数指定函数类型"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS_MEMBER</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="s">"非重载函数"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS_MEMBER</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="kt">size_t</span><span class="p">())</span> <span class="o">==</span> <span class="nb">false</span><span class="p">,</span> <span class="s">"非重载函数带错误函数类型"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS_MEMBER</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="kt">size_t</span><span class="p">()</span><span class="k">const</span><span class="p">),</span> <span class="s">"非重载函数带正确函数类型"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS_MEMBER</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">value_type</span><span class="p">),</span> <span class="s">"类型定义"</span><span class="p">);</span>
+
+  <span class="k">using</span> <span class="n">IntIntPairType</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span><span class="p">;</span>  <span class="c1">// 解决宏分不清 "," 的问题</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS_MEMBER</span><span class="p">(</span><span class="n">IntIntPairType</span><span class="p">,</span> <span class="n">first</span><span class="p">),</span> <span class="s">"成员函数"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS_MEMBER</span><span class="p">(</span><span class="n">IntIntPairType</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="nb">false</span><span class="p">,</span> <span class="s">"不存在"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>  </div>
+</blockquote>
+
+<h3 id="初始版本">初始版本</h3>
+
+<p>这个实现在CLANG和GCC编译器下都OK，但在VS2015下会出现迷之错误，通过IDE智能提示查看到的值都是对的，但一编译就有问题，感觉应该是其decltype关键字实现上有BUG:</p>
+
+<blockquote>
+  <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">namespace</span> <span class="n">detail</span> <span class="p">{</span>
+<span class="c1">// 引入C++17中的std::void_t实现</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span><span class="o">...&gt;</span> <span class="k">struct</span> <span class="n">_Param_tester</span> <span class="p">{</span> <span class="k">using</span> <span class="n">type</span> <span class="o">=</span> <span class="kt">void</span><span class="p">;</span> <span class="p">};</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span><span class="o">...</span> <span class="nc">_Types</span><span class="o">&gt;</span>
+<span class="k">using</span> <span class="n">void_t</span> <span class="o">=</span> <span class="k">typename</span> <span class="n">_Param_tester</span><span class="o">&lt;</span><span class="n">_Types</span><span class="p">...</span><span class="o">&gt;::</span><span class="n">type</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="cp">#define HAS_MEMBER_DEF(name)                                                   \
+  namespace detail {                                                           \
+  template &lt;class T, class F = void, class V = void&gt;                           \
+  struct HasMember_##name : std::false_type {};                                \
+  template &lt;class T, class F&gt;                                                  \
+  struct HasMember_##name&lt;T, F, void_t&lt;decltype(std::mem_fn&lt;F&gt;(&amp;T::name))&gt;&gt;    \
+      : std::true_type {};                                                     \
+  template &lt;class T&gt;                                                           \
+  struct HasMember_##name&lt;T, void, void_t&lt;decltype(&amp;T::name)&gt;&gt;                 \
+      : std::true_type {};                                                     \
+  template &lt;class T&gt;                                                           \
+  struct HasMember_##name&lt;T, void, void_t&lt;typename T::name&gt;&gt;                   \
+      : std::true_type {};                                                     \
+  }
+</span>
+<span class="cp">#define HAS_MEMBER(type, name, ...)                                            \
+  detail::HasMember_##name&lt;type, ##__VA_ARGS__, void&gt;::value
+</span></code></pre></div>  </div>
+</blockquote>
+
+<h3 id="终极实现">终极实现</h3>
+
+<blockquote>
+  <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define HAS_MEMBER_DEF(name)                                                   \
+  namespace detail {                                                           \
+  template &lt;class T, class F = void&gt; class HasMember_##name {                  \
+    template &lt;class _Ux&gt;                                                       \
+    static std::true_type                                                      \
+    Check(int,                                                                 \
+          typename std::enable_if&lt;std::is_void&lt;F&gt;::value,                      \
+                                  decltype(&amp;_Ux::name) *&gt;::type = nullptr);    \
+    template &lt;class _Ux&gt;                                                       \
+    static std::true_type                                                      \
+    Check(int, decltype(std::mem_fn&lt;F&gt;(&amp;_Ux::name)) * = nullptr);              \
+    template &lt;class _Ux&gt;                                                       \
+    static std::true_type Check(int, typename _Ux::name * = nullptr);          \
+    template &lt;class _Ux&gt; static std::false_type Check(...);                    \
+                                                                               \
+  public:                                                                      \
+    static constexpr bool value = decltype(Check&lt;T&gt;(0))::value;                \
+  };                                                                           \
+  }
+</span>
+<span class="cp">#define HAS_MEMBER(type, name, ...)                                            \
+  detail::HasMember_##name&lt;type, ##__VA_ARGS__&gt;::value
+</span></code></pre></div>  </div>
+</blockquote>
+
+<h3 id="更多实现">更多实现</h3>
+
+<p>C++17引入的<a href="http://en.cppreference.com/w/cpp/experimental/is_detected" target="_blank">std::is_detected</a>在大多数情况下，提供了解决这类问题的一个标准方式：</p>
+
+<blockquote>
+  <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">using</span> <span class="n">toString_t</span> <span class="o">=</span> <span class="k">decltype</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">declval</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&amp;&gt;</span><span class="p">().</span><span class="n">toString</span><span class="p">()</span> <span class="p">);</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">has_toString</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_detected_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">toString_t</span><span class="o">&gt;</span><span class="p">;</span>
+</code></pre></div>  </div>
+</blockquote>
+
+<p>此外<a href="http://www.boost.org/doc/libs/1_55_0/libs/tti/doc/html/index.html" target="_blank">Boost.TTI</a>实现方式和我上面的类似：</p>
+
+<blockquote>
+  <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;boost/tti/has_member_function.hpp&gt;
+</span><span class="n">BOOST_TTI_HAS_MEMBER_FUNCTION</span><span class="p">(</span><span class="n">toString</span><span class="p">)</span>
+<span class="p">...</span>
+<span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">foo</span> <span class="o">=</span> <span class="n">has_member_function_toString</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+</code></pre></div>  </div>
+</blockquote>
+
+<h3 id="使用">使用</h3>
+
+<p>在C++14中(如果不使用template lambda可以兼容C++11，只是写起来要麻烦些)，可以这样用：</p>
+
+<blockquote>
+  <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="kt">bool</span> <span class="n">C</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Ft</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Ff</span><span class="p">,</span> <span class="k">class</span><span class="o">...</span> <span class="nc">Args</span><span class="o">&gt;</span>
+<span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">enable_if</span><span class="o">&lt;</span><span class="n">C</span><span class="p">,</span> <span class="kt">size_t</span><span class="o">&gt;::</span><span class="n">type</span> <span class="nf">Exec</span><span class="p">(</span><span class="n">Ft</span> <span class="o">&amp;&amp;</span><span class="n">ft</span><span class="p">,</span> <span class="n">Ff</span> <span class="o">&amp;&amp;</span><span class="n">ff</span><span class="p">,</span> <span class="n">Args</span> <span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Ft</span><span class="o">&gt;</span><span class="p">(</span><span class="n">ft</span><span class="p">)(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span><span class="p">(</span><span class="n">args</span><span class="p">)...);</span>
+<span class="p">}</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="kt">bool</span> <span class="n">C</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Ft</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Ff</span><span class="p">,</span> <span class="k">class</span><span class="o">...</span> <span class="nc">Args</span><span class="o">&gt;</span>
+<span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">enable_if</span><span class="o">&lt;!</span><span class="n">C</span><span class="p">,</span> <span class="kt">size_t</span><span class="o">&gt;::</span><span class="n">type</span> <span class="nf">Exec</span><span class="p">(</span><span class="n">Ft</span> <span class="o">&amp;&amp;</span><span class="n">ft</span><span class="p">,</span> <span class="n">Ff</span> <span class="o">&amp;&amp;</span><span class="n">ff</span><span class="p">,</span> <span class="n">Args</span> <span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Ff</span><span class="o">&gt;</span><span class="p">(</span><span class="n">ff</span><span class="p">)(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span><span class="p">(</span><span class="n">args</span><span class="p">)...);</span>
+<span class="p">}</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span> <span class="k">auto</span> <span class="nf">Size</span><span class="p">(</span><span class="k">const</span> <span class="n">T</span> <span class="o">&amp;</span><span class="n">obj</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// 使用了template lamabda需要使用C++14选项编译</span>
+  <span class="k">return</span> <span class="n">Exec</span><span class="o">&lt;</span><span class="n">HAS_MEMBER</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span><span class="o">&gt;</span><span class="p">(</span>
+    <span class="p">[](</span><span class="k">const</span> <span class="k">auto</span> <span class="o">&amp;</span><span class="n">obj</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">obj</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="p">},</span>
+    <span class="p">[](</span><span class="k">const</span> <span class="k">auto</span> <span class="o">&amp;</span><span class="n">obj</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="p">},</span> <span class="n">obj</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">a</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">b</span><span class="p">;</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">Size</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">Size</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="kt">size_t</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div>  </div>
+</blockquote>
+
+<p>配合C++17的<a href="http://www.oschina.net/translate/final-features-of-c17" target="_blank">if constexpr</a>特性，我们可以更优雅：</p>
+
+<blockquote>
+  <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+<span class="kt">size_t</span> <span class="nf">Size</span><span class="p">(</span><span class="k">const</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">obj</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="k">constexpr</span> <span class="p">(</span><span class="n">HAS_MEMBER</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>  </div>
+</blockquote>
+
+<h3 id="后续">后续</h3>
+
+<p>其实早在远古时代，MSVC就提供了非标准扩展<a href="https://msdn.microsoft.com/en-us/library/x7wy9xh3.aspx" target="_blank">__if_exists</a>关键字来实现上述的功能，不仅仅能检查类成员，还可以检查全局函数，全局变量，局部变量，但我对非标的东西一直持排斥态度；于是实现了一个全局检测版本，在GCC，CLANG上不能编译，但在VS2015上能完美运行：</p>
+
+<blockquote>
+  <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define HAS_DEF(name)                                                          \
+  namespace detail {                                                           \
+  template &lt;class F = void&gt; class Has_##name {                                 \
+    template &lt;class _Ux&gt;                                                       \
+    static std::true_type                                                      \
+    Check(int, typename std::enable_if&lt;std::is_void&lt;F&gt;::value,                 \
+                                       decltype(&amp;name) *&gt;::type = nullptr);    \
+    template &lt;class _Ux&gt;                                                       \
+    static std::true_type                                                      \
+    Check(int, decltype(std::bind&lt;void, typename std::decay&lt;F&gt;::type&gt;(         \
+                   &amp;name)) * = nullptr);                                       \
+    template &lt;class _Ux&gt; static std::false_type Check(...);                    \
+                                                                               \
+  public:                                                                      \
+    static constexpr bool value = decltype(Check&lt;void&gt;(0))::value;             \
+  };                                                                           \
+  }
+#define HAS(name, ...) detail::Has_##name&lt;##__VA_ARGS__&gt;::value
+</span>
+<span class="cp">#if defined(_MSC_VER) &amp;&amp; (_MSC_VER &gt;= 1900)
+</span><span class="kt">void</span> <span class="nf">Print</span><span class="p">()</span> <span class="p">{}</span>
+<span class="kt">void</span> <span class="nf">Print</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">{}</span>
+<span class="kt">void</span> <span class="nf">X</span><span class="p">()</span> <span class="p">{}</span>
+<span class="kt">int</span> <span class="n">aaa</span><span class="p">;</span>
+
+<span class="n">HAS_DEF</span><span class="p">(</span><span class="n">Print</span><span class="p">)</span>
+<span class="n">HAS_DEF</span><span class="p">(</span><span class="n">Print1</span><span class="p">)</span>
+<span class="n">HAS_DEF</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="n">HAS_DEF</span><span class="p">(</span><span class="n">aaa</span><span class="p">)</span>
+<span class="n">HAS_DEF</span><span class="p">(</span><span class="n">bbb</span><span class="p">)</span>
+<span class="cp">#endif
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="cp">#if defined(_MSC_VER) &amp;&amp; (_MSC_VER &gt;= 1900)
+</span>  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS</span><span class="p">(</span><span class="n">Print</span><span class="p">)</span> <span class="o">==</span> <span class="nb">false</span><span class="p">,</span> <span class="s">"重载函数"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS</span><span class="p">(</span><span class="n">Print</span><span class="p">,</span> <span class="kt">void</span><span class="p">(</span><span class="kt">int</span><span class="p">)),</span> <span class="s">"重载函数指定函数类型"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="s">"非重载函数"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="kt">void</span><span class="p">(</span><span class="kt">int</span><span class="p">))</span> <span class="o">==</span> <span class="nb">false</span><span class="p">,</span> <span class="s">"非重载函数带错误函数类型"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="kt">void</span><span class="p">()),</span> <span class="s">"非重载函数带正确函数类型"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS</span><span class="p">(</span><span class="n">aaa</span><span class="p">),</span> <span class="s">"变量"</span><span class="p">);</span>
+  <span class="k">static_assert</span><span class="p">(</span><span class="n">HAS</span><span class="p">(</span><span class="n">bbb</span><span class="p">)</span> <span class="o">==</span> <span class="nb">false</span><span class="p">,</span> <span class="s">"不存在"</span><span class="p">);</span>
+<span class="cp">#endif
+</span><span class="p">}</span>
+</code></pre></div>  </div>
+</blockquote>
+
+<p><br /></p>
+
+<blockquote>
+  <p><a href="/2017/02/use_template_and_macro_to_check_for_member_of_class_is_exist/">原始链接</a> 版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh">Creative Commons BY-NC-ND 4.0</a></p>
+</blockquote>
+:ET

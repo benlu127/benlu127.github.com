@@ -1,0 +1,53 @@
+I"�<p>这几天有兴致研究了一些东西想更新下博客，但发现Jekyll不能运行，把过程中踩到的一些坑记录下，以便他人：</p>
+
+<p>首先提示版本错误：</p>
+<blockquote>
+  <p>zsh: /usr/local/bin/jekyll: bad interpreter: /System/Library/Frameworks/Ruby.framework/Versions/2.0/usr/bin: no such file or directory</p>
+</blockquote>
+
+<p>运行 <strong>ruby –version</strong> 查看系统ruby版本已经升级到了2.3.3，运行命令更新jekyll和bundler，因为新版macOS <em>/usr/bin</em>不能写，需要手动指定安装到<em>/usr/local/bin</em>目录</p>
+<blockquote>
+  <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>gem <span class="nb">install</span> <span class="nt">-n</span> /usr/local/bin jekyll bundler
+</code></pre></div>  </div>
+</blockquote>
+
+<p><br /></p>
+
+<p>升级后，运行<strong>jekyll serve</strong>，又提示错误:</p>
+<blockquote>
+  <p>/Library/Ruby/Site/2.3.0/bundler/spec_set.rb:88:in `block in materialize’: Could not find public_suffix-2.0.4 &gt; in any of the sources (Bundler::GemNotFound)<br />
+         from /Library/Ruby/Site/2.3.0/bundler/spec_set.rb:82:in `map!’<br />
+         from /Library/Ruby/Site/2.3.0/bundler/spec_set.rb:82:in `materialize’<br />
+         from /Library/Ruby/Site/2.3.0/bundler/definition.rb:170:in `specs’<br />
+         from /Library/Ruby/Site/2.3.0/bundler/definition.rb:237:in `specs_for’<br />
+         from /Library/Ruby/Site/2.3.0/bundler/definition.rb:226:in `requested_specs’<br />
+         from /Library/Ruby/Site/2.3.0/bundler/runtime.rb:108:in `block in definition_method’<br />
+         from /Library/Ruby/Site/2.3.0/bundler/runtime.rb:20:in `setup’<br />
+         from /Library/Ruby/Site/2.3.0/bundler.rb:107:in `setup’<br />
+         from /Library/Ruby/Gems/2.3.0/gems/jekyll-3.6.2/lib/jekyll/plugin_manager.rb:50:in `require_from_bundler’<br />
+         from /Library/Ruby/Gems/2.3.0/gems/jekyll-3.6.2/exe/jekyll:11:in `&lt;top (required)&gt;’<br />
+         from /usr/local/bin/jekyll:23:in `load’<br />
+         from /usr/local/bin/jekyll:23:in `&lt;main&gt;’</p>
+</blockquote>
+
+<p>Google了一下没找到答案，看了下代码，觉得应该是_config.yml相关依赖库没升级造成的问题，运行命令升级依赖库：</p>
+<blockquote>
+  <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bundle update
+</code></pre></div>  </div>
+</blockquote>
+
+<p><br /></p>
+
+<p>再次运行，能启动起来了，但有个警告：</p>
+<blockquote>
+  <p>Deprecation: The ‘gems’ configuration option has been renamed to ‘plugins’. Please update your config file accordingly.</p>
+</blockquote>
+
+<p>打开_config.yml将gems修改为plugins，问题解决</p>
+
+<p><br /></p>
+
+<blockquote>
+  <p><a href="/2017/12/jekyll_problem_in_macos_high_sierra_10_13/">原始链接</a> 版权声明：自由转载-非商用-非衍生-保持署名 | <a href="http://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh">Creative Commons BY-NC-ND 4.0</a></p>
+</blockquote>
+:ET
