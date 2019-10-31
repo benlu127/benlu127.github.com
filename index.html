@@ -1,1 +1,21 @@
-First word hehehe
+--- layout: default title: 主页 --- 
+
+1. ​    {% for post in paginator.posts %}    
+
+2. ## [{{ post.title }}](file:///home/ben/benlu127.github.com/stidio.github.io-master/{{ post.url }})
+
+   {{ post.content | strip_html | strip_newlines | truncate: 250 }}…
+
+   {{ post.date | date: "%F"}}
+
+   ​          ![img](file:///images/tag-alt-icon.png)         
+
+   [                                                                        {% for tag in post.tags %}{{ tag | xml_escape }} {% endfor %}                                   ](file:///tags)
+
+   [           ](file:///tags)[阅读全文...](file:///home/ben/benlu127.github.com/stidio.github.io-master/{{)          
+
+   ------
+
+3. ​    {% endfor %}  
+
+   {% include pagination.html %} 
